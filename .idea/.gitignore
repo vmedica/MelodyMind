@@ -1,8 +1,78 @@
-# Default ignored files
-/shelf/
-/workspace.xml
-# Editor-based HTTP Client requests
-/httpRequests/
-# Datasource local storage ignored files
-/dataSources/
-/dataSources.local.xml
+# Java, Maven e Eclipse
+
+# File e cartelle di build
+target/
+*.class
+*.log
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# File di configurazione IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# File di configurazione Eclipse
+.vscode/
+.settings/
+.project
+.classpath
+.factorypath
+.apt_generated
+.springBeans
+
+# File temporanei ed altri file non necessari
+*.bak
+*.swp
+*~.nib
+*.tmp
+*.orig
+*.launch
+hs_err_pid*
+
+# Maven wrapper e configurazioni di progetto
+.mvn/wrapper/maven-wrapper.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# File generati da Eclipse e strumenti correlati
+.metadata
+bin/
+tmp/
+.externalToolBuilders/
+.tern-project
+.texlipse
+
+# Configurazioni specifiche di Windows
+Thumbs.db
+ehthumbs.db
+$RECYCLE.BIN/
+[Dd]esktop.ini
+*.lnk
+
+# File di configurazione specifici di Eclipse
+.sonarlint/
+.recommenders/
+
+# File di configurazione specifici di IntelliJ IDEA
+# Esclude i file usati internamente dall'IDE ma che non fanno parte del progetto.
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# File di configurazione MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# File di configurazione Linux
+*~
