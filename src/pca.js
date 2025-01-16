@@ -103,3 +103,39 @@ function pcaWork(datasetIniziale, sogliaVarianza){
 
     //return [standardizzatoEsportato, pcEsportato];
 }
+
+// Funzione per creare un grafico delle componenti principali in base alla varianza
+function creaGraficoVarianza(autovettori) {
+    let percentualiVarianza = [];
+    let vettoriSelezionati = [];
+
+    for(let i=0;i<autovettori.length; i++){
+        vettoriSelezionati.push(autovettori[i]);
+
+        // Calcola la percentuale di varianza spiegata dalle componenti selezionate
+        let percentuale = pcaLib.computePercentageExplained(autovettori, ...vettoriSelezionati);
+        // Memorizza la percentuale calcolata nell'array 'percentualiVarianza'.
+        percentualiVarianza.push(percentuale);
+    }
+
+    // Crea un array con i numeri progressivi delle componenti principali (es: 1, 2, 3...).
+    let componenti = [...Array(percentualiVarianza.length).keys()].map(x => x + 1);
+
+    // Configura il tracciato del grafico per rappresentare la relazione tra numero di componenti
+    // e la percentuale di varianza spiegata.
+    var trace = {
+        x: componenti,                  // Asse X: numero cumulativo delle componenti principali.
+        y: percentualiVarianza,        // Asse Y: percentuale cumulativa di varianza spiegata.
+        type: 'scatter'                // Tipo di grafico: scatter (lineare con punti).
+    };
+
+    // Configura il layout del grafico (titolo e assi).
+    var layout = {
+        title: 'Varianza spiegata dalle componenti principali', // Titolo del grafico.
+        xaxis: { title: 'Numero di Componenti' },               // Etichetta dell'asse X.
+        yaxis: { title: 'Percentuale di Varianza' }             // Etichetta dell'asse Y.
+    };
+
+    // Disegna il grafico utilizzando la libreria 'nodeplotlib'.
+    nodeplotlib.plot([trace], layout);
+}
