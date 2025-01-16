@@ -49,7 +49,7 @@ function pcaWork(datasetIniziale, sogliaVarianza){
         datasetNormalizzato.push(canzone);
     }
 
-    // Esportazione del dataset normalizzato
+    // Converte il DataFrame normalizzato in formato CSV e lo scrive su un file specificato da 'fileStandardizzato'.
     let dataFrameNormalizzato = new dataForgeLib.DataFrame({
         values: datasetNormalizzato
     });
@@ -59,7 +59,47 @@ function pcaWork(datasetIniziale, sogliaVarianza){
     let datasetArray = dataFrameNormalizzato.subset(colonneSelezionate).toRows();
     let autovettori = pcaLib.getEigenVectors(datasetArray);
 
+    // Calcolo della percentuale di varianza spiegata per determinare il numero ottimale di componenti
+    let vettoriSelezionati = [];
+    let percentualiVarianza = [];
+    let i;
+    for (i = 0; i < autovettori.length; i++) {
+        vettoriSelezionati.push(autovettori[i]);    // 1. Aggiunge il vettore corrente ('autovettori[i]') all'array dei vettori selezionati.
+        let percentuale = pcaLib.computePercentageExplained(autovettori, ...vettoriSelezionati); // 2. Calcola la percentuale di varianza spiegata usando una funzione della libreria PCA ('computePercentageExplained').
+        percentualiVarianza.push(percentuale); // 3. Aggiunge la percentuale calcolata all'array delle percentuali di varianza ('percentualiVarianza').
+        if (percentuale >= sogliaVarianza) { // 4. Se la percentuale di varianza spiegata raggiunge o supera una soglia prefissata ('sogliaVarianza'),
+            break;  //    il ciclo termina, avendo selezionato il numero ottimale di componenti principali.
+        }
+    }
 
+    // Generazione del grafico delle componenti principali
+    creaGraficoVarianza(autovettori);
+
+    // Trasformazione dei dati usando le componenti principali
+    let datiTrasformati = pcaLib.computeAdjustedData(datasetArray, ...vettoriSelezionati).adjustedData;
+
+    // Creazione di un nuovo dataset con le componenti principali
+    let datasetPCA = [];
+    let nomiComponenti = [];
+    for (let j = 0; j < datiTrasformati.length; j++) {
+        nomiComponenti.push('PC' + (j + 1));
+    }
+
+    for (let i = 0; i < datiTrasformati[0].length; i++) {
+        let canzoneTrasformata = {};
+        for (let j = 0; j < datiTrasformati.length; j++) {
+            canzoneTrasformata[nomiComponenti[j]] = datiTrasformati[j][i];
+        }
+        datasetPCA.push(canzoneTrasformata);
+    }
+
+    // Esportazione del dataset con le componenti principali
+    let dataFramePCA = new dataForgeLib.DataFrame({
+        values: datasetPCA
+    });
+    dataFramePCA.asCSV().writeFileSync(filePCA);
+
+    return [fileStandardizzato, filePCA];
 
     //return [standardizzatoEsportato, pcEsportato];
 }
