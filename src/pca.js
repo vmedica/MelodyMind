@@ -139,3 +139,31 @@ function creaGraficoVarianza(autovettori) {
     // Disegna il grafico utilizzando la libreria 'nodeplotlib'.
     nodeplotlib.plot([trace], layout);
 }
+
+// Funzione per calcolare la media di un array di numeri.
+/*
+* Calcola la somma di tutti gli elementi nell'array.
+* Ogni elemento viene convertito in numero con parseFloat per gestire eventuali stringhe.
+*/
+function calcolaMedia(array) {
+    let somma = array.reduce((acc, val) => acc + parseFloat(val), 0);
+    return Math.sqrt(sommaQuadrati / array.length);
+}
+/* * Funzione per calcolare la deviazione standard di un array di numeri.
+*
+* La deviazione standard misura la dispersione dei valori rispetto alla media.
+*/
+function calcolaDeviazioneStandard(array, media) {
+    // Calcola la somma dei quadrati delle differenze tra ciascun valore dell'array e la media.
+    let sommaQuadrati = array.reduce((acc, val) => acc + Math.pow(parseFloat(val) - media, 2), 0);
+    // Ritorna la radice quadrata della somma dei quadrati divisa per il numero di elementi
+    return Math.sqrt(sommaQuadrati / array.length);
+}
+
+function normalizzazioneZScore(){
+    const media = calcolaMedia(array);
+    const deviazione = calcolaDeviazioneStandard(array, media);
+    array.forEach((val, index) =>{
+        array[index] = (val - media)/deviazione;
+    })
+}
