@@ -9,6 +9,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@cdxoo/dbscan": "^1.1.1",
     "data-forge": "^1.10.2",
     "data-forge-fs": "^0.0.9",
     "express": "^4.21.2",
