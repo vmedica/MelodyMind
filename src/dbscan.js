@@ -13,11 +13,14 @@ const minPoints = 10; // Numero minimo di punti richiesti per formare un cluster
 function main(pcaOutputPath){
     //Manipolazione del dataset
     let dataFrame = dataForge.readFileSync(pcaOutputPath).parseCSV(); // Lettura del file CSV come DataFrame
-    dataFrame = dataFrame = dataFrame.parseFloats("PC1"); // Parsing della colonna PC1 come float
+    dataFrame = dataFrame.parseFloats("PC1"); // Parsing della colonna PC1 come float
     dataFrame = dataFrame.parseFloats("PC2");
     dataFrame = dataFrame.parseFloats("PC3");
 
     let arrayArray = dataFrame.toRows(); // Conversione del DataFrame in array di array (righe come array)
+
+    console.log("Dataset:", arrayArray);
+
 
     // Inizializzazione di array per memorizzare risultati intermedi
     arrayEpsilon = []; // Valori di epsilon testati
@@ -114,6 +117,7 @@ function grafico3D(clusters, dataset) {
         yaxis: { title: 'PC2' },
         zaxis: { title: 'PC3' }
     };
+    console.log("Data to be plotted:", dataToBePlotted);
     nodeplotlib.plot(dataToBePlotted, layout);
 }
 
