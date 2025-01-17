@@ -128,8 +128,8 @@ function grafico3D(clusters, dataset) {
  * @param {Array} noise - Numero di elementi noise
  */
 function graficoRelazione(epsilons, primocluster, noise) {
-    let trace1 = { x: epsilons, y: primocluster, type: 'scatter', name: 'Cluster più grande' };
-    let trace2 = { x: epsilons, y: noise, type: 'scatter', name: 'Noise' };
+    let trace1 = { x: epsilons, y: primocluster, type: 'scatter', name: 'Numero di elementi contenuti nel Cluster più grande' };
+    let trace2 = { x: epsilons, y: noise, type: 'scatter', name: 'Numero di elementi Noise' };
     let data = [trace1, trace2];
     let layout = {
         title: 'Relazione tra epsilon e risultati',
