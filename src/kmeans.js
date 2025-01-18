@@ -60,7 +60,7 @@ function main(pathPCA, pathStandardizzato) {
     let datasetCompleto = dataFramePC.toArray();
 
     // 2. Determina il numero ottimale di cluster utilizzando il metodo del punto di gomito
-    const elbowPointIndex = elbowPoint(datasetPCA, 2, 10);
+    const elbowPointIndex = elbowPoint(datasetPCA, 2, 10);  //passato il numero min e max di cluster
     console.log("Punto di gomito: " + elbowPointIndex);
 
     // 3. Esegue il clustering con il numero di cluster ottimale
@@ -81,73 +81,94 @@ function main(pathPCA, pathStandardizzato) {
 }
 
 
-//Funzione che genera un barchart in base a una determinata features
-function barChart(puntiCluster,feature,datasetCluster,datasetCompleto,n_cluster){
+/**
+ * Genera un grafico a barre (barchart) per una determinata caratteristica (feature)
+ * di un cluster di canzoni. Il grafico include tre tracce:
+ * 1. I valori della feature per le canzoni del cluster.
+ * 2. La media della feature per il cluster.
+ * 3. La media della feature per l'intero dataset.
+ *
+ * @param {Array} puntiCluster - I punti che rappresentano il cluster attuale.
+ * @param {string} feature - Il nome della feature da analizzare (es. "danceability", "energy").
+ * @param {Array} datasetCluster - Il dataset PCA contenente i punti dei cluster.
+ * @param {Array} datasetCompleto - Il dataset completo normalizzato.
+ * @param {number} nCluster - L'indice del cluster attuale (per il titolo del grafico).
+ */
+function barChart(puntiCluster, feature, datasetCluster, datasetCompleto, nCluster) {
+    // Ottiene le canzoni appartenenti al cluster attuale
+    let songs = fromPointsToSong(puntiCluster, datasetCluster, datasetCompleto);
 
-    let songs = fromPointsToSong(puntiCluster,datasetCluster,datasetCompleto); //contiene le canzoni del cluster
-
-    var valoriFeature=[]; // solo canzoni cluster
-    for(i=0;i<songs.length;i++){
-        valoriFeature.push(parseFloat(songs[i][feature]))
+    // Crea un array per memorizzare i valori della feature per ciascuna canzone del cluster
+    var valoriFeature = [];
+    for (let i = 0; i < songs.length; i++) {
+        // Converte il valore della feature in numero decimale e lo aggiunge all'array
+        valoriFeature.push(parseFloat(songs[i][feature]));
     }
 
+    // Definisce la prima traccia: i valori della feature per ciascuna canzone nel cluster
     var trace1 = {
-        x:  [...Array(songs.length).keys()],
-        y: valoriFeature,
+        x: [...Array(songs.length).keys()], // Indici delle canzoni (asse X)
+        y: valoriFeature, // Valori della feature per le canzoni (asse Y)
         name: 'Canzone',
         marker: {
-            color: "rgba(255, 100, 102, 1)",
+            color: "rgb(0, 71, 171)", // Colore delle barre
             line: {
-                color:  "rgba(255, 100, 102, 1)",
-                width: 1
+                color: "rgb(0, 71, 171)", // Colore del contorno delle barre
+                width: 1 // Spessore del contorno
             }
         },
-        opacity: 0.5,
-        type: "bar",
-
+        opacity: 0.5, // Trasparenza delle barre
+        type: "bar", // Tipo di grafico: barre
     };
 
+    // Definisce la seconda traccia: la media della feature per il cluster
     var trace2 = {
-        y: new Array(songs.length).fill(valoreMedio(valoriFeature)),
-        x:  [...Array(songs.length).keys()],
+        y: new Array(songs.length).fill(valoreMedio(valoriFeature)), // Valore costante: media del cluster
+        x: [...Array(songs.length).keys()], // Stessa X delle canzoni
         marker: {
-            color: "rgba(0, 0, 0, 1)",
+            color: "rgb(255, 87, 51)", // Colore della linea
             line: {
-                color:  "rgba(0, 0, 0, 1)",
-                width: 1
+                color: "rgb(255, 87, 51)", // Colore del contorno
+                width: 1 // Spessore del contorno
             }
         },
         name: 'Media del cluster',
-        type: 'scatter'
+        type: 'scatter' // Tipo di grafico: linea
     };
 
+    // Definisce la terza traccia: la media della feature per l'intero dataset
     var trace3 = {
-        y: new Array(songs.length).fill(valoreMedio(datasetCompleto, feature)),
-        x:  [...Array(songs.length).keys()],
+        y: new Array(songs.length).fill(valoreMedio(datasetCompleto, feature)), // Valore costante: media del dataset
+        x: [...Array(songs.length).keys()], // Stessa X delle canzoni
         marker: {
-            color: "rgb(106,90,205,1)",
+            color: "rgb(40, 167, 69)", // Colore della linea
             line: {
-                color:  "rgb(106,90,205,1)",
-                width: 1
+                color: "rgb(40, 167, 69)", // Colore del contorno
+                width: 1 // Spessore del contorno
             }
         },
         name: 'Media del dataset',
-        type: 'scatter'
+        type: 'scatter' // Tipo di grafico: linea
     };
 
+    // Combina tutte le tracce in un unico array
     var data = [trace1, trace2, trace3];
+
+    // Configura il layout del grafico
     var layout = {
-        bargap: 0.05,
-        bargroupgap: 0.2,
-        barmode: "overlay",
-        title: "Cluster "+ n_cluster,
-        xaxis: {title: "Canzone"},
-        yaxis: {title: feature}
+        bargap: 0.05, // Spaziatura tra le barre
+        bargroupgap: 0.2, // Spaziatura tra i gruppi di barre
+        barmode: "overlay", // Sovrapposizione delle barre
+        title: "Cluster " + nCluster, // Titolo del grafico
+        xaxis: { title: "Canzone" }, // Etichetta asse X
+        yaxis: { title: feature } // Etichetta asse Y
     };
 
-    nodeplotlib.plot(data,layout);
-
+    // Utilizza la libreria nodeplotlib per tracciare il grafico
+    nodeplotlib.plot(data, layout);
 }
+
+
 //Funzione che ritorna le percentuali di genere all'interno di un cluster
 function categorizzazioneCluster(points,datasetPCA,datasetCompleto){
     var generiPrincipali=["alternative","jazz","pop","indie","rock","country","dance","hip hop","metal","blues","folk","soul","carnaval","punk","disco","electro","rap","latin","reggae","altri"];
@@ -242,60 +263,78 @@ function control_point(point,pointControl){
     }
     return riscontro;
 }
-//Funzione per il calcolo del elbowPoint
-function elbowPoint(dataset,min,max){
 
-    let kmin=min; //valore minimo di k
-    let kmax=max; //valore massi a cui puo arrivare k
-    let sse=[]; //squared sum estimate
+/**
+ * Calcola il "Elbow Point" (punto di ginocchio) per determinare il numero ottimale di cluster
+ * utilizzando il metodo SSE (Sum of Squared Errors) e genera un grafico per visualizzarlo.
+ *
+ * @param {Array} dataset - Il dataset su cui eseguire il clustering.
+ * @param {number} min - Il valore minimo di k (numero di cluster da analizzare).
+ * @param {number} max - Il valore massimo di k (numero di cluster da analizzare).
+ * @returns {number} - Il valore ottimale di k (elbow point).
+ */
+function elbowPoint(dataset, min, max) {
+    let kmin = min; // Valore minimo di k
+    let kmax = max; // Valore massimo di k
+    let sse = []; // Array per memorizzare i valori di SSE (Somma dei Quadrati degli Errori)
 
-    for(k=kmin;k<=kmax;k++) { //Calcolo l'sse per ogni k
-        clusterMaker.k(k);
-        clusterMaker.iterations(100);
-        clusterMaker.data(dataset);
-        let cluster = clusterMaker.clusters();
-        var distortions = 0;
-        for (i = 0; i < k; i++)
-            distortions = distortions + sommaDistanze(cluster[i].centroid, cluster[i].points);
-        sse.push(distortions);
+    // Calcolo SSE per ogni valore di k. SSE (Sum of Squared Errors), noto anche come somma dei quadrati degli errori, è una metrica utilizzata per valutare la qualità dei cluster in algoritmi di clustering come il K-Means.
+    for (let k = kmin; k <= kmax; k++) {
+        clusterMaker.k(k); // Imposta il numero di cluster
+        clusterMaker.iterations(100); // Imposta il numero massimo di iterazioni
+        clusterMaker.data(dataset); // Assegna il dataset al clustering
+        let cluster = clusterMaker.clusters(); // Ottieni i cluster generati
+
+        // Calcolo della somma delle distanze per i punti di ciascun cluster
+        let distortions = 0;
+        for (let i = 0; i < k; i++) {
+            distortions += sommaDistanze(cluster[i].centroid, cluster[i].points);
+        }
+        sse.push(distortions); // Aggiunge il valore SSE per il valore corrente di k
     }
 
-    // Calcolo elbow point
-    deltas = [];
-    for (i = 1; i < sse.length - 1; i++){
-        delta1 = Math.abs(sse[i] - sse[i-1]);
-        delta2 = Math.abs(sse[i+1] - sse[i]);
-        deltas.push(Math.abs(delta2-delta1));
+    // Calcolo delle variazioni tra SSE consecutivi per identificare il ginocchio (elbow point)
+    let deltas = [];
+    for (let i = 1; i < sse.length - 1; i++) {
+        let delta1 = Math.abs(sse[i] - sse[i - 1]); // Differenza tra k e k-1
+        let delta2 = Math.abs(sse[i + 1] - sse[i]); // Differenza tra k+1 e k
+        deltas.push(Math.abs(delta2 - delta1)); // Calcola la variazione tra i due delta
     }
+
+    // Trova il massimo delta, che corrisponde al punto di ginocchio
     const maximumDelta = Math.max(...deltas);
-    const elbowPoint = deltas.indexOf(maximumDelta) + 1 + kmin; // Trust me
+    const elbowPoint = deltas.indexOf(maximumDelta) + 1 + kmin;
 
-    //Inserisco in un array i valori di k per cui ho calcolato l'sse
-    var cordinateX=[];
-    for(k=0;k<kmax;k++)
-        cordinateX[k]=kmin+k;
+    // Crea un array con i valori di k per l'asse X
+    let coordinateX = [];
+    for (let k = 0; k < sse.length; k++) {
+        coordinateX[k] = kmin + k;
+    }
 
-    //Generazione del grafico
+    // Generazione del grafico per visualizzare l'andamento di SSE rispetto al numero di cluster
     var trace1 = {
-        x: cordinateX,
-        y: sse,
-        type: 'scatter'
+        x: coordinateX, // Numero di cluster (asse X)
+        y: sse, // Valori di SSE (asse Y)
+        type: 'scatter', // Tipo di grafico: linea
+        name: 'SSE per ogni k'
     };
     var data = [trace1];
     var layout = {
-        title: 'Elbow Point',
+        title: 'Elbow Point', // Titolo del grafico
         xaxis: {
-            title: 'Number of Clusters',
+            title: 'Numero di Cluster (k)' // Etichetta asse X
         },
         yaxis: {
-            title: 'SSE',
+            title: 'SSE (Sum of Squared Errors)' // Etichetta asse Y
         }
     };
 
-    nodeplotlib.plot(data,layout);
+    // Traccia il grafico utilizzando nodeplotlib
+    nodeplotlib.plot(data, layout);
 
-    return elbowPoint;
+    return elbowPoint; // Restituisce il valore ottimale di k
 }
+
 //Funzione usata per estrarre da un array di punti solo una determinata coordinata
 function extractColum(points,coordinata){
     var elementiColonna=[];
@@ -303,20 +342,32 @@ function extractColum(points,coordinata){
         elementiColonna.push(points[i][coordinata]);
     return elementiColonna;
 }
-//Funzione usata per ottenere le canzoni da un insieme di punti
-function fromPointsToSong(points,datasetCluster,datasetCompleto){
-    var songs=[];
-    //1. Per ogni punto nell array controllo se nel dataset utilizzato per creare i cluster,
-    //e presente un punto con le stesse cordinate
-    //2. Nel caso in cui esiste sfruttando la posizione nel dataset ottengo la canzone coincidente con quel punto
-    for(i=0;i<points.length;i++){
-        for(j=0;j<datasetCluster.length;j++){
-            if(control_point(points[i],datasetCluster[j]))
+
+/**
+ * Funzione per ottenere le canzoni associate a un insieme di punti clusterizzati.
+ *
+ * @param {Array} points - Array di punti (coordinate) appartenenti a un cluster.
+ * @param {Array} datasetCluster - Cluster da cui estrarre
+ * @param {Array} datasetCompleto - Dataset completo contenente i dettagli delle canzoni.
+ * @returns {Array} songs - Array di canzoni corrispondenti ai punti del cluster.
+ */
+function fromPointsToSong(points, datasetCluster, datasetCompleto) {
+    var songs = []; // Array per memorizzare le canzoni corrispondenti ai punti.
+
+    // Per ogni punto nel cluster...
+    for (let i = 0; i < points.length; i++) {
+        // ...verifica se esiste un punto con le stesse coordinate nel dataset clusterizzato.
+        for (let j = 0; j < datasetCluster.length; j++) {
+            if (control_point(points[i], datasetCluster[j])) {
+                // Se c'è una corrispondenza, aggiungi la canzone corrispondente dal dataset completo.
                 songs.push(datasetCompleto[j]);
+            }
         }
     }
-    return songs
+
+    return songs; // Restituisce l'array di canzoni trovate.
 }
+
 //Funzione usata per generare un grafico radar dei cluster creati
 function graficoRadar(clusters, datasetCluster,datasetCompleto,rangeMin=-2,rangeMax=6){
 
@@ -463,19 +514,35 @@ function researchTitleCluster(points,datasetPCA,datasetCompleto){
     }while(j<points.length)
     return nameSongs;
 }
-//Funzione che calcola la distanza euclidea
-function sommaDistanze(centroide, punti){
-    let somma = 0;
-    const dimension = centroide.length;
-    for(i=0;i<punti.length;i++){
-        sommaDimensioni = 0;
-        for(j=0;j<dimension;j++){
-            sommaDimensioni += Math.pow(punti[i][j]-centroide[j],2);
+
+/**
+ * Calcola la somma delle distanze euclidee tra un centroide e un insieme di punti.
+ *
+ * @param {Array<number>} centroide - Coordinate del centroide (array di dimensione d).
+ * @param {Array<Array<number>>} punti - Insieme di punti, ognuno rappresentato come array di dimensione d.
+ * @returns {number} - Somma delle distanze euclidee tra il centroide e tutti i punti.
+ */
+function sommaDistanze(centroide, punti) {
+    let somma = 0; // Variabile per accumulare la somma delle distanze.
+    const dimension = centroide.length; // Numero di dimensioni del centroide (uguale a quella dei punti).
+
+    // Itero su ogni punto del cluster
+    for (i = 0; i < punti.length; i++) {
+        let sommaDimensioni = 0; // Somma delle differenze al quadrato per ogni dimensione.
+
+        // Calcolo la distanza al quadrato tra il punto e il centroide per ogni dimensione.
+        for (j = 0; j < dimension; j++) {
+            sommaDimensioni += Math.pow(punti[i][j] - centroide[j], 2);
         }
+
+        // Aggiungo la radice quadrata (distanza euclidea) alla somma totale.
         somma += Math.sqrt(sommaDimensioni);
     }
-    return somma;
+
+    return somma; // Restituisco la somma delle distanze.
 }
+
+
 //Funzione che calcola il valore medio di una feature in un array
 function valoreMedio(array, feature = undefined){
     let n = array.length;
