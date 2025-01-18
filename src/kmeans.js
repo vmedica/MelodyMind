@@ -1,112 +1,551 @@
 /**
- * Importa il modulo nodeplotlib per generare grafici.
+ * Importa il modulo `nodeplotlib` per la visualizzazione di grafici e plot.
+ * @module nodeplotlib
  */
 var nodeplotlib = require('nodeplotlib');
 
 /**
- * Importa il modulo data-forge per la manipolazione dei dati.
+ * Importa la libreria `data-forge` per l'analisi e la manipolazione di dataset.
+ * @module data-forge
  */
-var dataForge = require('data-forge');
+var dataForgeLib = require('data-forge');
 
 /**
- * Importa il modulo clusters per il clustering.
+ * Importa il modulo `clusters` per l'esecuzione di algoritmi di clustering.
+ * @module clusters
  */
 var clusterMaker = require('clusters');
 
 /**
- * Importa il modulo data-forge-fs per leggere file con data-forge.
+ * Importa il modulo `data-forge-fs` per la lettura e scrittura di file tramite `data-forge`.
+ * @module data-forge-fs
  */
 require('data-forge-fs');
 
 /**
- * Funzione principale per l'analisi dei dati musicali.
+ * La funzione principale per eseguire il processo di clustering delle canzoni utilizzando le componenti principali (PCA)
+ * e i dati normalizzati, quindi crea delle playlist in base ai cluster generati e le prepara per essere inviate tramite
+ * le API di Spotify.
  *
- * @param {string} pathPCA - Percorso al file CSV contenente le componenti principali.
- * @param {string} pathStandardizzato - Percorso al file CSV contenente il dataset standardizzato.
- * @returns {Array} Un array contenente i cluster, le playlist, il dataset PCA e il dataset completo.
+ * 1. Legge il file CSV contenente i dati delle componenti principali.
+ * 2. Normalizza i dati e li converte in un formato utilizzabile.
+ * 3. Calcola il numero ottimale di cluster tramite il metodo del "grafico del punto di gomito".
+ * 4. Applica un algoritmo di clustering per raggruppare i dati.
+ * 5. Crea una playlist per ogni gruppo di canzoni basato sui cluster, usando i dati delle canzoni e le API di Spotify.
+ *
+ * @param {string} pathPCA - Il percorso del file CSV contenente i dati delle componenti principali, risultati da un'analisi PCA.
+ * @param {string} pathStandardizzato - Il percorso del file CSV contenente i dati delle canzoni normalizzati.
+ *
+ * @returns {Array} - Un array contenente:
+ *   1. I cluster calcolati tramite l'algoritmo di clustering.
+ *   2. Le playlist create in base ai cluster.
+ *   3. Il dataset delle Componenti Principali, rappresentato come un array di array.
+ *   4. Il dataset completo normalizzato come array.
  */
 function main(pathPCA, pathStandardizzato) {
-    // Legge il file delle componenti principali e lo trasforma in un DataFrame
-    let dataFrame = dataForge.readFileSync(pathPCA).parseCSV();
 
-    // Ottiene i nomi delle colonne dal DataFrame
-    let columnNames = dataFrame.getColumnNames();
+    // Legge il file CSV contenente i dati delle Componenti Principali e li converte in un DataFrame
+    let dataFramePC = dataForgeLib.readFileSync(pathPCA).parseCSV();
+
+    // 1. Estrae i nomi delle colonne generate dall'analisi PCA e converte ogni colonna in numeri
+    let columnNames = dataFramePC.getColumnNames();
     for (i = 0; i < columnNames.length; i++)
-        dataFrame = dataFrame.parseFloats(columnNames[i]);
-    let datasetPCA = dataFrame.toRows(); // Converte il DataFrame in array di array
+        dataFramePC = dataFramePC.parseFloats(columnNames[i]);
 
-    // Legge il file del dataset standardizzato
-    dataFrame = dataForge.readFileSync(pathStandardizzato).parseCSV();
-    let datasetCompleto = dataFrame.toArray();
+    // Converte il DataFrame in un array di righe (ogni riga rappresenta una canzone)
+    let datasetPCA = dataFramePC.toRows();
 
+    // Legge il file CSV contenente i dati normalizzati
+    dataFramePC = dataForgeLib.readFileSync(pathStandardizzato).parseCSV();
+    let datasetCompleto = dataFramePC.toArray();
+
+    // 2. Determina il numero ottimale di cluster utilizzando il metodo del punto di gomito
+    const elbowPointIndex = elbowPoint(datasetPCA, 2, 10);
+    console.log("Punto di gomito: " + elbowPointIndex);
+
+    // 3. Esegue il clustering con il numero di cluster ottimale
+    const clusters = makeCluster(elbowPointIndex, 1000, datasetPCA);
+
+    // 4. Crea le playlist in base ai cluster calcolati, utilizzando i punti di ciascun cluster e i dati completi delle canzoni
+    let playlists = [];
+    var i = 0;
+    while (i < clusters.length) {
+        // Crea una playlist per ogni cluster
+        var playlist = fromPointsToSong(clusters[i].points, datasetPCA, datasetCompleto);
+        playlists.push(playlist);
+        i++;
+    }
+
+    // Restituisce i risultati: i cluster, le playlist, il dataset PCA e il dataset completo
+    return [clusters, playlists, datasetPCA, datasetCompleto];
 }
 
-/**
- * Calcola il "punto di gomito" per determinare il numero ottimale di cluster
- * utilizzando il metodo del "squared sum estimate" (SSE)
- *
- * @param {Array} dataset - Il dataset su cui eseguire il clustering.
- * @param {number} min - Il valore minimo di k (numero di cluster).
- * @param {number} max - Il valore massimo di k (numero di cluster).
- * @returns {number} Il valore di k che rappresenta il punto di gomito.
- */
 
-function elbowPoint(dataset, min, max) {
-    let kmin = min; // Valore minimo di k.
-    let kmax = max; // Valore massimo di k.
-    let sse = []; // Array per memorizzare i valori di SSE per ogni k.
+//Funzione che genera un barchart in base a una determinata features
+function barChart(puntiCluster,feature,datasetCluster,datasetCompleto,n_cluster){
 
-    // Calcolo l'SSE per ogni valore di k nel range [kmin, kmax].
-    for (let k = kmin; k <= kmax; k++) {
-        clusterMaker.k(k); // Imposta il numero di cluster.
-        clusterMaker.iterations(100); // Imposta il numero massimo di iterazioni per il clustering.
-        clusterMaker.data(dataset); // Fornisce il dataset al cluster maker.
-        let cluster = clusterMaker.clusters(); // Esegue il clustering e restituisce i cluster.
+    let songs = fromPointsToSong(puntiCluster,datasetCluster,datasetCompleto); //contiene le canzoni del cluster
 
-        let distortions = 0; // Variabile per calcolare la somma delle distanze.
-        for (let i = 0; i < k; i++) {
-            distortions += sommaDistanze(cluster[i].centroid, cluster[i].points); // Somma delle distanze tra punti e centroidi.
-        }
-        sse.push(distortions); // Aggiunge l'SSE calcolato all'array.
+    var valoriFeature=[]; // solo canzoni cluster
+    for(i=0;i<songs.length;i++){
+        valoriFeature.push(parseFloat(songs[i][feature]))
     }
 
-    // Calcolo il punto di gomito analizzando le variazioni di SSE tra valori consecutivi di k.
-    let deltas = []; // Array per memorizzare i cambiamenti tra valori di SSE consecutivi.
-    for (let i = 1; i < sse.length - 1; i++) {
-        let delta1 = Math.abs(sse[i] - sse[i - 1]); // Cambiamento tra SSE[i] e SSE[i-1].
-        let delta2 = Math.abs(sse[i + 1] - sse[i]); // Cambiamento tra SSE[i+1] e SSE[i].
-        deltas.push(Math.abs(delta2 - delta1)); // Differenza assoluta tra i cambiamenti.
-    }
+    var trace1 = {
+        x:  [...Array(songs.length).keys()],
+        y: valoriFeature,
+        name: 'Canzone',
+        marker: {
+            color: "rgba(255, 100, 102, 1)",
+            line: {
+                color:  "rgba(255, 100, 102, 1)",
+                width: 1
+            }
+        },
+        opacity: 0.5,
+        type: "bar",
 
-    // Trova il massimo cambiamento tra i delta, che rappresenta il punto di gomito.
-    const maximumDelta = Math.max(...deltas);
-    const elbowPoint = deltas.indexOf(maximumDelta) + 1 + kmin; // Calcola il valore ottimale di k.
-
-    // Genera un array con i valori di k per cui è stato calcolato l'SSE.
-    let cordinateX = [];
-    for (let k = 0; k < kmax - kmin + 1; k++) {
-        cordinateX[k] = kmin + k;
-    }
-
-    // Generazione del grafico per visualizzare l'andamento dell'SSE rispetto al numero di cluster.
-    let trace1 = {
-        x: cordinateX, // Numero di cluster (asse x).
-        y: sse, // SSE calcolato per ogni cluster (asse y).
-        type: 'scatter' // Tipo di grafico: scatter plot.
     };
-    let data = [trace1]; // Dati del grafico.
-    let layout = {
-        title: 'Elbow Point', // Titolo del grafico.
+
+    var trace2 = {
+        y: new Array(songs.length).fill(valoreMedio(valoriFeature)),
+        x:  [...Array(songs.length).keys()],
+        marker: {
+            color: "rgba(0, 0, 0, 1)",
+            line: {
+                color:  "rgba(0, 0, 0, 1)",
+                width: 1
+            }
+        },
+        name: 'Media del cluster',
+        type: 'scatter'
+    };
+
+    var trace3 = {
+        y: new Array(songs.length).fill(valoreMedio(datasetCompleto, feature)),
+        x:  [...Array(songs.length).keys()],
+        marker: {
+            color: "rgb(106,90,205,1)",
+            line: {
+                color:  "rgb(106,90,205,1)",
+                width: 1
+            }
+        },
+        name: 'Media del dataset',
+        type: 'scatter'
+    };
+
+    var data = [trace1, trace2, trace3];
+    var layout = {
+        bargap: 0.05,
+        bargroupgap: 0.2,
+        barmode: "overlay",
+        title: "Cluster "+ n_cluster,
+        xaxis: {title: "Canzone"},
+        yaxis: {title: feature}
+    };
+
+    nodeplotlib.plot(data,layout);
+
+}
+//Funzione che ritorna le percentuali di genere all'interno di un cluster
+function categorizzazioneCluster(points,datasetPCA,datasetCompleto){
+    var generiPrincipali=["alternative","jazz","pop","indie","rock","country","dance","hip hop","metal","blues","folk","soul","carnaval","punk","disco","electro","rap","latin","reggae","altri"];
+    //1. Prendo tutti i generi del cluster
+    var generi=[];
+    generi=researchGenreCluster(points,datasetPCA,datasetCompleto);
+
+    //2. Canzoni per categoria
+    var conteggioGeneri=[];
+
+    // Azzero l'array
+    for(j=0;j<20;j++)
+        conteggioGeneri[j]=0;
+
+    for(z=0;z<generi.length;z++){
+        if(generi[z].includes(generiPrincipali[0]))
+            conteggioGeneri[0]++;
+        else
+        if(generi[z].includes(generiPrincipali[1]))
+            conteggioGeneri[1]++;
+        else
+        if(generi[z].includes(generiPrincipali[2]))
+            conteggioGeneri[2]++;
+        else
+        if(generi[z].includes(generiPrincipali[3]))
+            conteggioGeneri[3]++;
+        else
+        if(generi[z].includes(generiPrincipali[4]))
+            conteggioGeneri[4]++;
+        else
+        if(generi[z].includes(generiPrincipali[5]))
+            conteggioGeneri[5]++;
+        else
+        if(generi[z].includes(generiPrincipali[6]))
+            conteggioGeneri[6]++;
+        else
+        if(generi[z].includes(generiPrincipali[7]))
+            conteggioGeneri[7]++;
+        else
+        if(generi[z].includes(generiPrincipali[8]))
+            conteggioGeneri[8]++;
+        else
+        if(generi[z].includes(generiPrincipali[9]))
+            conteggioGeneri[9]++;
+        else
+        if(generi[z].includes(generiPrincipali[10]))
+            conteggioGeneri[10]++;
+        else
+        if(generi[z].includes(generiPrincipali[11]))
+            conteggioGeneri[11]++;
+        else
+        if(generi[z].includes(generiPrincipali[12]))
+            conteggioGeneri[12]++;
+        else
+        if(generi[z].includes(generiPrincipali[13]))
+            conteggioGeneri[13]++;
+        else
+        if(generi[z].includes(generiPrincipali[14]))
+            conteggioGeneri[14]++;
+        else
+        if(generi[z].includes(generiPrincipali[15]))
+            conteggioGeneri[15]++;
+        else
+        if(generi[z].includes(generiPrincipali[16]))
+            conteggioGeneri[16]++;
+        else
+        if(generi[z].includes(generiPrincipali[17]))
+            conteggioGeneri[17]++;
+        else
+        if(generi[z].includes(generiPrincipali[18]))
+            conteggioGeneri[18]++;
+        else
+            conteggioGeneri[19]++;
+    }
+
+    //3. Stringa percentuale
+    var percentuale="";
+    for(i=0;i<generiPrincipali.length;i++)
+        if(conteggioGeneri[i]!=0)
+            percentuale+=generiPrincipali[i]+": "+((conteggioGeneri[i]/points.length) * 100).toFixed(0)+"%\n";
+
+    return percentuale;
+}
+//Funzione che controlla se due punti hanno le stesse cordinate
+function control_point(point,pointControl){
+    var riscontro=false;
+    for(cordinata=0;cordinata<point.length;cordinata++){
+        if(point[cordinata]==pointControl[cordinata])
+            riscontro=true;
+        else
+            return false;
+    }
+    return riscontro;
+}
+//Funzione per il calcolo del elbowPoint
+function elbowPoint(dataset,min,max){
+
+    let kmin=min; //valore minimo di k
+    let kmax=max; //valore massi a cui puo arrivare k
+    let sse=[]; //squared sum estimate
+
+    for(k=kmin;k<=kmax;k++) { //Calcolo l'sse per ogni k
+        clusterMaker.k(k);
+        clusterMaker.iterations(100);
+        clusterMaker.data(dataset);
+        let cluster = clusterMaker.clusters();
+        var distortions = 0;
+        for (i = 0; i < k; i++)
+            distortions = distortions + sommaDistanze(cluster[i].centroid, cluster[i].points);
+        sse.push(distortions);
+    }
+
+    // Calcolo elbow point
+    deltas = [];
+    for (i = 1; i < sse.length - 1; i++){
+        delta1 = Math.abs(sse[i] - sse[i-1]);
+        delta2 = Math.abs(sse[i+1] - sse[i]);
+        deltas.push(Math.abs(delta2-delta1));
+    }
+    const maximumDelta = Math.max(...deltas);
+    const elbowPoint = deltas.indexOf(maximumDelta) + 1 + kmin; // Trust me
+
+    //Inserisco in un array i valori di k per cui ho calcolato l'sse
+    var cordinateX=[];
+    for(k=0;k<kmax;k++)
+        cordinateX[k]=kmin+k;
+
+    //Generazione del grafico
+    var trace1 = {
+        x: cordinateX,
+        y: sse,
+        type: 'scatter'
+    };
+    var data = [trace1];
+    var layout = {
+        title: 'Elbow Point',
         xaxis: {
-            title: 'Number of Clusters' // Etichetta per l'asse x.
+            title: 'Number of Clusters',
         },
         yaxis: {
-            title: 'SSE' // Etichetta per l'asse y.
+            title: 'SSE',
         }
     };
 
-    nodeplotlib.plot(data, layout); // Mostra il grafico utilizzando nodeplotlib.
+    nodeplotlib.plot(data,layout);
 
-    return elbowPoint; // Restituisce il valore di k corrispondente al punto di gomito.
+    return elbowPoint;
+}
+//Funzione usata per estrarre da un array di punti solo una determinata coordinata
+function extractColum(points,coordinata){
+    var elementiColonna=[];
+    for(i=0;i<points.length;i++)
+        elementiColonna.push(points[i][coordinata]);
+    return elementiColonna;
+}
+//Funzione usata per ottenere le canzoni da un insieme di punti
+function fromPointsToSong(points,datasetCluster,datasetCompleto){
+    var songs=[];
+    //1. Per ogni punto nell array controllo se nel dataset utilizzato per creare i cluster,
+    //e presente un punto con le stesse cordinate
+    //2. Nel caso in cui esiste sfruttando la posizione nel dataset ottengo la canzone coincidente con quel punto
+    for(i=0;i<points.length;i++){
+        for(j=0;j<datasetCluster.length;j++){
+            if(control_point(points[i],datasetCluster[j]))
+                songs.push(datasetCompleto[j]);
+        }
+    }
+    return songs
+}
+//Funzione usata per generare un grafico radar dei cluster creati
+function graficoRadar(clusters, datasetCluster,datasetCompleto,rangeMin=-2,rangeMax=6){
+
+    var j=0;
+    var data=[];
+
+    while(j<clusters.length) {
+        var songs=fromPointsToSong(clusters[j].points,datasetCluster,datasetCompleto);
+        var trace = {
+            type: 'scatterpolar',
+            r: [ valoreMedio(songs,"Beats Per Minute (BPM)"),valoreMedio(songs,"Energy"), valoreMedio(songs,"Danceability"),
+                valoreMedio(songs,"Loudness (dB)"), valoreMedio(songs,"Liveness"),
+                valoreMedio(songs,"Valence"),
+                valoreMedio(songs,"Acousticness"), valoreMedio(songs,"Speechiness")],
+            theta: ["Beats Per Minute (BPM)","Energy","Danceability","Loudness (dB)","Liveness","Valence","Acousticness","Speechiness"],
+            fill: 'toself',
+            name: 'Cluster '+ j,
+        };
+        data.push(trace);
+        j = j + 1;
+    }
+
+    layout = {
+        polar: {
+            radialaxis: {
+                visible: true,
+                range: [rangeMin, rangeMax]
+            }
+        }
+    }
+
+    nodeplotlib.plot(data,layout);
+}
+//Funzione usata per generare un grafico 3D che mostra i punti nello spazio
+function grafico3D(clusters,datasetCluster,datasetCompleto){
+
+    var dataToBePlotted=[];
+    var i=0;
+
+    let songs = [ ];
+
+    //Per ogni cluster creato
+    while(i<clusters.length) {
+
+        const _x = extractColum(clusters[i].points,0);
+        const _y = extractColum(clusters[i].points,1);
+        const _z = extractColum(clusters[i].points,2);
+
+        const _title = researchTitleCluster(clusters[i].points,datasetCluster,datasetCompleto);
+        const _genere = researchGenreCluster(clusters[i].points,datasetCluster,datasetCompleto);
+
+        for(let p = 0; p < _x.length; p++) {
+            const song = {
+                x: _x[p],
+                y: _y[p],
+                z: _z[p],
+                title: _title[p],
+                genere: _genere[p].trim()
+            }
+            songs.push(song);
+        }
+
+        let trace = {
+            x: _x,
+            y: _y,
+            z: _z, //Do tutte le canzoni che compongono il cluster
+            mode: 'markers',
+            name:"Trace " + i + ": " + categorizzazioneCluster(clusters[i].points,datasetCluster,datasetCompleto),
+            marker: {
+                size: 5,
+                line: {
+                    width: 0.1
+                },
+                opacity: 1,
+            },
+            text: _title, //Ottengo un array di titoli per le canzoni che compongono il cluster
+            type: 'scatter3d'
+        };
+
+        dataToBePlotted.push(trace);
+        i=i+1;
+
+    }
+
+    var layout = {
+        title: 'K-Means generated clusters',
+        legend: {
+            "orientation": "h"
+        }
+    };
+
+    nodeplotlib.plot(dataToBePlotted,layout);
+    //  nodeplotlib.plot(dataToBePlotted2, layout);
+
+}
+//Funzione che genera un barchart per ogni cluster
+function makeBarChart(clusters, feature, datasetCluster, datasetCompleto){
+    clusters.forEach((value, index, array)=>{
+        barChart(value.points, feature, datasetCluster, datasetCompleto, index );
+    });
+}
+//Funziona che genera dei cluster su un dataset
+function makeCluster(numberOfClusters, iterations, dataset){
+    clusterMaker.k(numberOfClusters);
+    clusterMaker.iterations(iterations);
+    clusterMaker.data(dataset);
+    return clusterMaker.clusters();
+}
+//Funzione che restituisce il genere di tutti i punti di un cluster
+function researchGenreCluster(points,datasetPCA,datasetCompleto){
+    var j=0;
+    var genereSongs=[];
+    do{
+        var cordX =points[j][0];
+        var cordY =points[j][1];
+        var cordZ =points[j][2];
+        var genere='';
+        for (i = 0; i < datasetPCA.length; i++) {
+            if (cordX == datasetPCA[i][0]  && cordY == datasetPCA[i][1] && cordZ == datasetPCA[i][2]) {
+                genere=genere+' '+datasetCompleto[i]['Top Genre'];
+            }
+        }
+        genereSongs.push(genere);
+        j++;
+    }while(j<points.length)
+    return genereSongs;
+}
+//Funzione che restituisce il titolo delle canzoni di tutti i punti di un cluster
+function researchTitleCluster(points,datasetPCA,datasetCompleto){
+    var j=0;
+    var nameSongs=[];
+    do{
+        var cordX =points[j][0];
+        var cordY =points[j][1];
+        var cordZ =points[j][2];
+        var title='';
+        for (i = 0; i < datasetPCA.length; i++) {
+            if (cordX == datasetPCA[i][0]  && cordY == datasetPCA[i][1] && cordZ == datasetPCA[i][2]) {
+                title=title+' '+datasetCompleto[i].Title;
+            }
+        }
+        nameSongs.push(title);
+        j++;
+    }while(j<points.length)
+    return nameSongs;
+}
+//Funzione che calcola la distanza euclidea
+function sommaDistanze(centroide, punti){
+    let somma = 0;
+    const dimension = centroide.length;
+    for(i=0;i<punti.length;i++){
+        sommaDimensioni = 0;
+        for(j=0;j<dimension;j++){
+            sommaDimensioni += Math.pow(punti[i][j]-centroide[j],2);
+        }
+        somma += Math.sqrt(sommaDimensioni);
+    }
+    return somma;
+}
+//Funzione che calcola il valore medio di una feature in un array
+function valoreMedio(array, feature = undefined){
+    let n = array.length;
+    let sum = 0;
+    array.forEach((value, index, array)=>{
+        const val = feature==undefined?value:value[feature];
+        if(val!=""||val){
+            sum += parseFloat(val);
+        } else {
+            n--;
+        }
+    });
+    return sum/n;
 }
 
+
+function graficoElbowPointByVarianza(gomito,varianza){
+    //Generazione del grafico
+    var trace1 = {
+        x: varianza,
+        y: gomito,
+        type: 'scatter'
+    };
+    var data = [trace1];
+    var layout = {
+        title: 'Gomito data la varianza della PCA',
+        xaxis: {
+            title: 'Varianza',
+        },
+        yaxis: {
+            title: 'Gomito',
+        }
+    };
+
+    nodeplotlib.plot(data,layout);
+}
+
+function graficoNumeroPuntiClusterByVarianza(numeroPunti,numeroCluster,percentualVarianza){
+
+    var data = [];
+    var i=0;
+    while (i<percentualVarianza.length){
+        var trace = {
+            x: numeroCluster[i],
+            y: numeroPunti[i],
+            name: 'Percentual Varianza:'+ percentualVarianza[i],
+            type: 'scatter'
+        };
+        data.push(trace)
+        i++;
+    }
+
+    var layout = {
+        title: 'Variazione numero punti di un cluster in base alla varianza della PCA',
+        xaxis: {
+            title: 'Cluster',
+        },
+        yaxis: {
+            title: 'Numero Punti',
+        }
+    };
+
+    nodeplotlib.plot(data,layout);
+}
+
+
+
+exports.graficoNumeroPuntiClusterByVarianza=graficoNumeroPuntiClusterByVarianza;
+exports.graficoElbowPointByVarianza=graficoElbowPointByVarianza;
+exports.mainKMeans = main;
+exports.grafico3D = grafico3D;
+exports.graficoRadar = graficoRadar;
+exports.makeHistograms = makeBarChart;
