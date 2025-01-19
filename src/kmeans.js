@@ -169,100 +169,113 @@ function barChart(puntiCluster, feature, datasetCluster, datasetCompleto, nClust
 }
 
 
-//Funzione che ritorna le percentuali di genere all'interno di un cluster
-function categorizzazioneCluster(points,datasetPCA,datasetCompleto){
-    var generiPrincipali=["alternative","jazz","pop","indie","rock","country","dance","hip hop","metal","blues","folk","soul","carnaval","punk","disco","electro","rap","latin","reggae","altri"];
-    //1. Prendo tutti i generi del cluster
-    var generi=[];
-    generi=researchGenreCluster(points,datasetPCA,datasetCompleto);
+/**
+ * Funzione che calcola le percentuali di genere musicale all'interno di un cluster.
+ *
+ * @param {Array} points - Un array di punti del cluster, ciascuno rappresentato come un array di 3 valori (X, Y, Z).
+ * @param {Array} datasetPCA - Il dataset PCA contenente le coordinate ridotte delle canzoni.
+ * @param {Array} datasetCompleto - Il dataset completo che include informazioni sui generi musicali e altre proprietà delle canzoni.
+ *
+ * @returns {string} Una stringa che contiene le percentuali dei generi principali presenti nel cluster.
+ */
+function categorizzazioneCluster(points, datasetPCA, datasetCompleto) {
+    // Generi musicali principali di riferimento
+    var generiPrincipali = ["alternative", "jazz", "pop", "indie", "rock", "country", "dance",
+        "hip hop", "metal", "blues", "folk", "soul", "carnaval", "punk",
+        "disco", "electro", "rap", "latin", "reggae", "altri"];
 
-    //2. Canzoni per categoria
-    var conteggioGeneri=[];
+    // 1. Ottieni tutti i generi delle canzoni nel cluster
+    var generi = [];
+    generi = researchGenreCluster(points, datasetPCA, datasetCompleto);
 
-    // Azzero l'array
-    for(j=0;j<20;j++)
-        conteggioGeneri[j]=0;
+    // 2. Conteggio delle canzoni per categoria di genere
+    var conteggioGeneri = [];
 
-    for(z=0;z<generi.length;z++){
-        if(generi[z].includes(generiPrincipali[0]))
+    // Inizializza l'array di conteggi con valori a zero
+    for (var j = 0; j < 20; j++) {
+        conteggioGeneri[j] = 0;
+    }
+
+    // Incrementa il conteggio per ogni genere corrispondente
+    for (var z = 0; z < generi.length; z++) {
+        if (generi[z].includes(generiPrincipali[0]))
             conteggioGeneri[0]++;
-        else
-        if(generi[z].includes(generiPrincipali[1]))
+        else if (generi[z].includes(generiPrincipali[1]))
             conteggioGeneri[1]++;
-        else
-        if(generi[z].includes(generiPrincipali[2]))
+        else if (generi[z].includes(generiPrincipali[2]))
             conteggioGeneri[2]++;
-        else
-        if(generi[z].includes(generiPrincipali[3]))
+        else if (generi[z].includes(generiPrincipali[3]))
             conteggioGeneri[3]++;
-        else
-        if(generi[z].includes(generiPrincipali[4]))
+        else if (generi[z].includes(generiPrincipali[4]))
             conteggioGeneri[4]++;
-        else
-        if(generi[z].includes(generiPrincipali[5]))
+        else if (generi[z].includes(generiPrincipali[5]))
             conteggioGeneri[5]++;
-        else
-        if(generi[z].includes(generiPrincipali[6]))
+        else if (generi[z].includes(generiPrincipali[6]))
             conteggioGeneri[6]++;
-        else
-        if(generi[z].includes(generiPrincipali[7]))
+        else if (generi[z].includes(generiPrincipali[7]))
             conteggioGeneri[7]++;
-        else
-        if(generi[z].includes(generiPrincipali[8]))
+        else if (generi[z].includes(generiPrincipali[8]))
             conteggioGeneri[8]++;
-        else
-        if(generi[z].includes(generiPrincipali[9]))
+        else if (generi[z].includes(generiPrincipali[9]))
             conteggioGeneri[9]++;
-        else
-        if(generi[z].includes(generiPrincipali[10]))
+        else if (generi[z].includes(generiPrincipali[10]))
             conteggioGeneri[10]++;
-        else
-        if(generi[z].includes(generiPrincipali[11]))
+        else if (generi[z].includes(generiPrincipali[11]))
             conteggioGeneri[11]++;
-        else
-        if(generi[z].includes(generiPrincipali[12]))
+        else if (generi[z].includes(generiPrincipali[12]))
             conteggioGeneri[12]++;
-        else
-        if(generi[z].includes(generiPrincipali[13]))
+        else if (generi[z].includes(generiPrincipali[13]))
             conteggioGeneri[13]++;
-        else
-        if(generi[z].includes(generiPrincipali[14]))
+        else if (generi[z].includes(generiPrincipali[14]))
             conteggioGeneri[14]++;
-        else
-        if(generi[z].includes(generiPrincipali[15]))
+        else if (generi[z].includes(generiPrincipali[15]))
             conteggioGeneri[15]++;
-        else
-        if(generi[z].includes(generiPrincipali[16]))
+        else if (generi[z].includes(generiPrincipali[16]))
             conteggioGeneri[16]++;
-        else
-        if(generi[z].includes(generiPrincipali[17]))
+        else if (generi[z].includes(generiPrincipali[17]))
             conteggioGeneri[17]++;
-        else
-        if(generi[z].includes(generiPrincipali[18]))
+        else if (generi[z].includes(generiPrincipali[18]))
             conteggioGeneri[18]++;
         else
-            conteggioGeneri[19]++;
+            conteggioGeneri[19]++; // Categoria "altri"
     }
 
-    //3. Stringa percentuale
-    var percentuale="";
-    for(i=0;i<generiPrincipali.length;i++)
-        if(conteggioGeneri[i]!=0)
-            percentuale+=generiPrincipali[i]+": "+((conteggioGeneri[i]/points.length) * 100).toFixed(0)+"%\n";
+    // 3. Creazione della stringa con le percentuali
+    var percentuale = "";
+    for (var i = 0; i < generiPrincipali.length; i++) {
+        if (conteggioGeneri[i] != 0) {
+            percentuale += generiPrincipali[i] + ": " + ((conteggioGeneri[i] / points.length) * 100).toFixed(0) + "%\n";
+        }
+    }
 
+    // Ritorna la stringa delle percentuali
     return percentuale;
 }
-//Funzione che controlla se due punti hanno le stesse cordinate
-function control_point(point,pointControl){
-    var riscontro=false;
-    for(cordinata=0;cordinata<point.length;cordinata++){
-        if(point[cordinata]==pointControl[cordinata])
-            riscontro=true;
-        else
-            return false;
+
+
+/**
+ * Controlla se due punti nello spazio hanno le stesse coordinate.
+ *
+ * @param {Array} point - Il primo punto rappresentato come array di coordinate (es. [x, y, z]).
+ * @param {Array} pointControl - Il secondo punto rappresentato come array di coordinate.
+ *
+ * @returns {boolean} Restituisce `true` se i due punti hanno le stesse coordinate, altrimenti `false`.
+ */
+function control_point(point, pointControl) {
+    var riscontro = false; // Variabile per indicare se i punti sono identici
+
+    // Confronta ogni coordinata dei due punti
+    for (var cordinata = 0; cordinata < point.length; cordinata++) {
+        if (point[cordinata] == pointControl[cordinata]) {
+            riscontro = true; // Le coordinate corrispondono
+        } else {
+            return false; // Appena una coordinata non corrisponde, restituisce false
+        }
     }
-    return riscontro;
+
+    return riscontro; // Se tutte le coordinate corrispondono, restituisce true
 }
+
 
 /**
  * Calcola il "Elbow Point" (punto di ginocchio) per determinare il numero ottimale di cluster
@@ -588,73 +601,116 @@ function sommaDistanze(centroide, punti) {
 }
 
 
-//Funzione che calcola il valore medio di una feature in un array
-function valoreMedio(array, feature = undefined){
-    let n = array.length;
-    let sum = 0;
-    array.forEach((value, index, array)=>{
-        const val = feature==undefined?value:value[feature];
-        if(val!=""||val){
-            sum += parseFloat(val);
+/**
+ * Calcola il valore medio di una feature in un array.
+ *
+ * @param {Array} array - L'array di dati in cui calcolare la media.
+ * @param {string|undefined} [feature=undefined] - (Opzionale) La feature specifica da calcolare, se l'array contiene oggetti.
+ *
+ * @returns {number} Il valore medio della feature specificata o dei valori nell'array.
+ */
+function valoreMedio(array, feature = undefined) {
+    let n = array.length; // Numero totale di elementi nell'array
+    let sum = 0; // Somma dei valori validi
+
+    // Itera su ogni elemento dell'array
+    array.forEach((value) => {
+        // Determina il valore da utilizzare (diretto o basato su una feature)
+        const val = feature === undefined ? value : value[feature];
+
+        // Aggiunge alla somma se il valore è valido (non vuoto o falsy)
+        if (val !== "" && val !== undefined && val !== null) {
+            sum += parseFloat(val); // Converte in float e somma
         } else {
-            n--;
+            n--; // Riduce il conteggio se il valore non è valido
         }
     });
-    return sum/n;
+
+    return sum / n; // Calcola e restituisce la media
 }
 
 
-function graficoElbowPointByVarianza(gomito,varianza){
-    //Generazione del grafico
+
+/**
+ * Genera un grafico scatter per visualizzare il gomito in base alla varianza della PCA.
+ *
+ * @param {Array} gomito - Array contenente i valori dell'asse Y (valori del gomito).
+ * @param {Array} varianza - Array contenente i valori dell'asse X (varianze).
+ */
+function graficoElbowPointByVarianza(gomito, varianza) {
+    // Creazione del tracciato dati per il grafico
     var trace1 = {
-        x: varianza,
-        y: gomito,
-        type: 'scatter'
+        x: varianza, // Asse X: varianza
+        y: gomito,   // Asse Y: gomito
+        type: 'scatter' // Tipo di grafico: scatter
     };
-    var data = [trace1];
+
+    var data = [trace1]; // Insieme dei dati per il grafico
+
+    // Layout del grafico
     var layout = {
-        title: 'Gomito data la varianza della PCA',
+        title: 'Gomito data la varianza della PCA', // Titolo del grafico
         xaxis: {
-            title: 'Varianza',
+            title: 'Varianza' // Titolo asse X
         },
         yaxis: {
-            title: 'Gomito',
+            title: 'Gomito' // Titolo asse Y
         }
     };
 
-    nodeplotlib.plot(data,layout);
+    // Generazione del grafico con NodePlotLib
+    nodeplotlib.plot(data, layout);
 }
 
-function graficoNumeroPuntiClusterByVarianza(numeroPunti,numeroCluster,percentualVarianza){
 
+/**
+ * Funzione che genera un grafico che mostra la variazione del numero di punti in un cluster
+ * in base alla varianza della PCA.
+ *
+ * @param {Array} numeroPunti - Array che contiene il numero di punti per cluster.
+ * @param {Array} numeroCluster - Array che contiene il numero di cluster.
+ * @param {Array} percentualVarianza - Array con le percentuali di varianza utilizzate.
+ */
+function graficoNumeroPuntiClusterByVarianza(numeroPunti, numeroCluster, percentualVarianza) {
+
+    // Array per memorizzare i dati da tracciare nel grafico
     var data = [];
-    var i=0;
-    while (i<percentualVarianza.length){
+
+    // Iterazione per ogni percentuale di varianza
+    var i = 0;
+    while (i < percentualVarianza.length) {
+        // Ogni traccia rappresenta una curva relativa a una percentuale di varianza
         var trace = {
-            x: numeroCluster[i],
-            y: numeroPunti[i],
-            name: 'Percentual Varianza:'+ percentualVarianza[i],
-            type: 'scatter'
+            x: numeroCluster[i], // Ascissa: numero di cluster
+            y: numeroPunti[i],   // Ordinata: numero di punti
+            name: 'Percentual Varianza: ' + percentualVarianza[i], // Etichetta della curva
+            type: 'scatter' // Tipo di grafico: scatter plot
         };
-        data.push(trace)
+
+        // Aggiunge la traccia al dataset
+        data.push(trace);
         i++;
     }
 
+    // Configurazione del layout del grafico
     var layout = {
-        title: 'Variazione numero punti di un cluster in base alla varianza della PCA',
+        title: 'Variazione numero punti di un cluster in base alla varianza della PCA', // Titolo del grafico
         xaxis: {
-            title: 'Cluster',
+            title: 'Cluster', // Etichetta asse x
         },
         yaxis: {
-            title: 'Numero Punti',
+            title: 'Numero Punti', // Etichetta asse y
         }
     };
 
-    nodeplotlib.plot(data,layout);
+    // Generazione del grafico con nodeplotlib
+    nodeplotlib.plot(data, layout);
 }
 
 
-
+/*
+ * Esporta le funzioni:
+ */
 exports.graficoNumeroPuntiClusterByVarianza=graficoNumeroPuntiClusterByVarianza;
 exports.graficoElbowPointByVarianza=graficoElbowPointByVarianza;
 exports.mainKMeans = main;
