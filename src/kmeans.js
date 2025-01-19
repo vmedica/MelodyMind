@@ -271,70 +271,62 @@ function control_point(point,pointControl){
  * @param {Array} dataset - Il dataset su cui eseguire il clustering.
  * @param {number} min - Il valore minimo di k (numero di cluster da analizzare).
  * @param {number} max - Il valore massimo di k (numero di cluster da analizzare).
- * @returns {number} - Il valore ottimale di k (elbow point).
+ * @returns {number} elbowPoint - Il valore ottimale di k (elbow point).
  */
-function elbowPoint(dataset, min, max) {
-    let kmin = min; // Valore minimo di k
-    let kmax = max; // Valore massimo di k
-    let sse = []; // Array per memorizzare i valori di SSE (Somma dei Quadrati degli Errori)
 
-    // Calcolo SSE per ogni valore di k. SSE (Sum of Squared Errors), noto anche come somma dei quadrati degli errori, è una metrica utilizzata per valutare la qualità dei cluster in algoritmi di clustering come il K-Means.
-    for (let k = kmin; k <= kmax; k++) {
-        clusterMaker.k(k); // Imposta il numero di cluster
-        clusterMaker.iterations(100); // Imposta il numero massimo di iterazioni
-        clusterMaker.data(dataset); // Assegna il dataset al clustering
-        let cluster = clusterMaker.clusters(); // Ottieni i cluster generati
+function elbowPoint(dataset,min,max){
 
-        // Calcolo della somma delle distanze per i punti di ciascun cluster
-        let distortions = 0;
-        for (let i = 0; i < k; i++) {
-            distortions += sommaDistanze(cluster[i].centroid, cluster[i].points);
-        }
-        sse.push(distortions); // Aggiunge il valore SSE per il valore corrente di k
+    let kmin=min; //valore minimo di k
+    let kmax=max; //valore massi a cui puo arrivare k
+    let sse=[]; //squared sum estimate
+
+    for(k=kmin;k<=kmax;k++) { //Calcolo l'sse per ogni k
+        clusterMaker.k(k);
+        clusterMaker.iterations(100);
+        clusterMaker.data(dataset);
+        let cluster = clusterMaker.clusters();
+        var distortions = 0;
+        for (i = 0; i < k; i++)
+            distortions = distortions + sommaDistanze(cluster[i].centroid, cluster[i].points);
+        sse.push(distortions);
     }
 
-    // Calcolo delle variazioni tra SSE consecutivi per identificare il ginocchio (elbow point)
-    let deltas = [];
-    for (let i = 1; i < sse.length - 1; i++) {
-        let delta1 = Math.abs(sse[i] - sse[i - 1]); // Differenza tra k e k-1
-        let delta2 = Math.abs(sse[i + 1] - sse[i]); // Differenza tra k+1 e k
-        deltas.push(Math.abs(delta2 - delta1)); // Calcola la variazione tra i due delta
+    // Calcolo elbow point
+    deltas = [];
+    for (i = 1; i < sse.length - 1; i++){
+        delta1 = Math.abs(sse[i] - sse[i-1]);
+        delta2 = Math.abs(sse[i+1] - sse[i]);
+        deltas.push(Math.abs(delta2-delta1));
     }
-
-    // Trova il massimo delta, che corrisponde al punto di ginocchio
     const maximumDelta = Math.max(...deltas);
-    const elbowPoint = deltas.indexOf(maximumDelta) + 1 + kmin;
+    const elbowPoint = deltas.indexOf(maximumDelta) + 1 + kmin; // Trust me
 
-    // Crea un array con i valori di k per l'asse X
-    let coordinateX = [];
-    for (let k = 0; k < sse.length; k++) {
-        coordinateX[k] = kmin + k;
-    }
+    //Inserisco in un array i valori di k per cui ho calcolato l'sse
+    var cordinateX=[];
+    for(k=0;k<kmax;k++)
+        cordinateX[k]=kmin+k;
 
-    // Generazione del grafico per visualizzare l'andamento di SSE rispetto al numero di cluster
+    //Generazione del grafico
     var trace1 = {
-        x: coordinateX, // Numero di cluster (asse X)
-        y: sse, // Valori di SSE (asse Y)
-        type: 'scatter', // Tipo di grafico: linea
-        name: 'SSE per ogni k'
+        x: cordinateX,
+        y: sse,
+        type: 'scatter'
     };
     var data = [trace1];
     var layout = {
-        title: 'Elbow Point', // Titolo del grafico
+        title: 'Elbow Point',
         xaxis: {
-            title: 'Numero di Cluster (k)' // Etichetta asse X
+            title: 'Number of Clusters',
         },
         yaxis: {
-            title: 'SSE (Sum of Squared Errors)' // Etichetta asse Y
+            title: 'SSE',
         }
     };
 
-    // Traccia il grafico utilizzando nodeplotlib
-    nodeplotlib.plot(data, layout);
+    nodeplotlib.plot(data,layout);
 
-    return elbowPoint; // Restituisce il valore ottimale di k
+    return elbowPoint;
 }
-
 //Funzione usata per estrarre da un array di punti solo una determinata coordinata
 function extractColum(points,coordinata){
     var elementiColonna=[];
@@ -401,68 +393,81 @@ function graficoRadar(clusters, datasetCluster,datasetCompleto,rangeMin=-2,range
 
     nodeplotlib.plot(data,layout);
 }
-//Funzione usata per generare un grafico 3D che mostra i punti nello spazio
-function grafico3D(clusters,datasetCluster,datasetCompleto){
 
-    var dataToBePlotted=[];
-    var i=0;
+/**
+ * Funzione per generare un grafico 3D che visualizza i punti di ciascun cluster nello spazio.
+ *
+ * @param {Array} clusters - Array di oggetti cluster, dove ogni oggetto contiene i punti appartenenti al cluster.
+ * @param {Array} datasetCluster - Dataset ridotto (ad esempio, PCA) utilizzato per il clustering.
+ * @param {Array} datasetCompleto - Dataset completo contenente i dettagli delle canzoni.
+ */
+function grafico3D(clusters, datasetCluster, datasetCompleto) {
 
-    let songs = [ ];
+    var dataToBePlotted = []; // Array che conterrà i dati per la generazione del grafico 3D.
+    var i = 0;
 
-    //Per ogni cluster creato
-    while(i<clusters.length) {
+    let songs = []; // Array per memorizzare le informazioni sulle canzoni nei cluster.
 
-        const _x = extractColum(clusters[i].points,0);
-        const _y = extractColum(clusters[i].points,1);
-        const _z = extractColum(clusters[i].points,2);
+    // Itera attraverso ogni cluster per estrarre e visualizzare i punti.
+    while (i < clusters.length) {
 
-        const _title = researchTitleCluster(clusters[i].points,datasetCluster,datasetCompleto);
-        const _genere = researchGenreCluster(clusters[i].points,datasetCluster,datasetCompleto);
+        // Estrae le coordinate x, y, z per ogni punto nel cluster.
+        const _x = extractColum(clusters[i].points, 0);
+        const _y = extractColum(clusters[i].points, 1);
+        const _z = extractColum(clusters[i].points, 2);
 
-        for(let p = 0; p < _x.length; p++) {
+        // Ottiene i titoli e i generi delle canzoni appartenenti a questo cluster.
+        const _title = researchTitleCluster(clusters[i].points, datasetCluster, datasetCompleto);
+        const _genere = researchGenreCluster(clusters[i].points, datasetCluster, datasetCompleto);
+
+        // Per ogni punto, crea un oggetto canzone con le informazioni pertinenti.
+        for (let p = 0; p < _x.length; p++) {
             const song = {
                 x: _x[p],
                 y: _y[p],
                 z: _z[p],
                 title: _title[p],
                 genere: _genere[p].trim()
-            }
-            songs.push(song);
+            };
+            songs.push(song); // Aggiungi la canzone all'array `songs`.
         }
 
+        // Crea una traccia per il grafico 3D, rappresentando un cluster.
         let trace = {
             x: _x,
             y: _y,
-            z: _z, //Do tutte le canzoni che compongono il cluster
-            mode: 'markers',
-            name:"Trace " + i + ": " + categorizzazioneCluster(clusters[i].points,datasetCluster,datasetCompleto),
+            z: _z, // Coordinate dei punti del cluster nello spazio 3D.
+            mode: 'markers', // Mostra i punti come marcatori.
+            name: "Trace " + i + ": " + categorizzazioneCluster(clusters[i].points, datasetCluster, datasetCompleto),
             marker: {
-                size: 5,
+                size: 5, // Dimensione dei marcatori per ogni punto.
                 line: {
-                    width: 0.1
+                    width: 0.1 // Spessore del bordo dei marcatori.
                 },
-                opacity: 1,
+                opacity: 1, // Opacità del marcatore.
             },
-            text: _title, //Ottengo un array di titoli per le canzoni che compongono il cluster
-            type: 'scatter3d'
+            text: _title, // Array di titoli delle canzoni per il mouseover.
+            type: 'scatter3d' // Tipo di grafico (scatter 3D).
         };
 
-        dataToBePlotted.push(trace);
-        i=i+1;
+        dataToBePlotted.push(trace); // Aggiungi la traccia al grafico finale.
+        i = i + 1; // Passa al prossimo cluster.
 
     }
 
+    // Definisce il layout del grafico.
     var layout = {
-        title: 'K-Means generated clusters',
+        title: 'K-Means generated clusters', // Titolo del grafico.
         legend: {
-            "orientation": "h"
+            "orientation": "h" // Imposta l'orientamento della legenda in orizzontale.
         }
     };
 
-    nodeplotlib.plot(dataToBePlotted,layout);
-    //  nodeplotlib.plot(dataToBePlotted2, layout);
-
+    // Visualizza il grafico 3D con i dati e il layout definiti.
+    nodeplotlib.plot(dataToBePlotted, layout);
 }
+
+
 //Funzione che genera un barchart per ogni cluster
 function makeBarChart(clusters, feature, datasetCluster, datasetCompleto){
     clusters.forEach((value, index, array)=>{
@@ -476,44 +481,84 @@ function makeCluster(numberOfClusters, iterations, dataset){
     clusterMaker.data(dataset);
     return clusterMaker.clusters();
 }
-//Funzione che restituisce il genere di tutti i punti di un cluster
-function researchGenreCluster(points,datasetPCA,datasetCompleto){
-    var j=0;
-    var genereSongs=[];
-    do{
-        var cordX =points[j][0];
-        var cordY =points[j][1];
-        var cordZ =points[j][2];
-        var genere='';
+/**
+ * Funzione che restituisce il genere di tutte le canzoni associate ai punti di un cluster.
+ *
+ * @param {Array} points - Un array di punti, ciascuno rappresentato come un array di 3 valori
+ *                          (coordinata X, Y e Z) che definiscono la posizione nel cluster.
+ * @param {Array} datasetPCA - Il dataset delle coordinate ottenute tramite PCA, utilizzato per
+ *                              confrontare i punti del cluster.
+ * @param {Array} datasetCompleto - Il dataset completo delle canzoni, che contiene le informazioni
+ *                                   come il genere e il titolo delle canzoni.
+ *
+ * @returns {Array} Un array contenente i generi delle canzoni associate ai punti del cluster.
+ */
+function researchGenreCluster(points, datasetPCA, datasetCompleto) {
+    var j = 0; // Inizializzazione dell'indice per iterare sui punti
+    var genereSongs = []; // Array che conterrà i generi delle canzoni per ogni punto nel cluster
+
+    // Itera su ogni punto del cluster
+    do {
+        var cordX = points[j][0]; // Estrai la coordinata X del punto
+        var cordY = points[j][1]; // Estrai la coordinata Y del punto
+        var cordZ = points[j][2]; // Estrai la coordinata Z del punto
+        var genere = ''; // Variabile per accumulare il genere della canzone
+
+        // Ciclo per confrontare il punto con tutti i punti nel dataset PCA
         for (i = 0; i < datasetPCA.length; i++) {
-            if (cordX == datasetPCA[i][0]  && cordY == datasetPCA[i][1] && cordZ == datasetPCA[i][2]) {
-                genere=genere+' '+datasetCompleto[i]['Top Genre'];
+            // Se le coordinate del punto corrente corrispondono a quelle nel dataset PCA
+            if (cordX == datasetPCA[i][0] && cordY == datasetPCA[i][1] && cordZ == datasetPCA[i][2]) {
+                // Aggiungi il genere della canzone associata alla coordinata al genere corrente
+                genere = genere + ' ' + datasetCompleto[i]['Top Genre'];
             }
         }
+
+        // Aggiungi il genere trovate nell'array delle canzoni
         genereSongs.push(genere);
-        j++;
-    }while(j<points.length)
+        j++; // Passa al prossimo punto nel cluster
+    } while (j < points.length) // Continua fino a che non sono stati processati tutti i punti
+
+    // Restituisce l'array dei generi delle canzoni
     return genereSongs;
 }
-//Funzione che restituisce il titolo delle canzoni di tutti i punti di un cluster
-function researchTitleCluster(points,datasetPCA,datasetCompleto){
-    var j=0;
-    var nameSongs=[];
-    do{
-        var cordX =points[j][0];
-        var cordY =points[j][1];
-        var cordZ =points[j][2];
-        var title='';
+
+/**
+ * Funzione che restituisce il titolo delle canzoni di tutti i punti di un cluster.
+ * Per ogni punto del cluster, cerca la corrispondenza nel dataset PCA e recupera il titolo della canzone associata.
+ *
+ * @param {Array} points - Array di punti appartenenti al cluster, ogni punto è rappresentato da un array di coordinate [x, y, z].
+ * @param {Array} datasetPCA - Dataset ridotto contenente le coordinate [x, y, z] dei punti.
+ * @param {Array} datasetCompleto - Dataset completo contenente le informazioni delle canzoni, inclusi i titoli.
+ * @returns {Array} nameSongs - Array contenente i titoli delle canzoni corrispondenti ai punti del cluster.
+ */
+function researchTitleCluster(points, datasetPCA, datasetCompleto) {
+    var j = 0; // Indice per scorrere i punti del cluster
+    var nameSongs = []; // Array per memorizzare i titoli delle canzoni
+
+    // Itera su tutti i punti del cluster
+    do {
+        // Estrai le coordinate (x, y, z) del punto
+        var cordX = points[j][0];
+        var cordY = points[j][1];
+        var cordZ = points[j][2];
+        var title = ''; // Variabile per raccogliere il titolo della canzone
+
+        // Confronta le coordinate del punto con quelle nel dataset PCA
         for (i = 0; i < datasetPCA.length; i++) {
-            if (cordX == datasetPCA[i][0]  && cordY == datasetPCA[i][1] && cordZ == datasetPCA[i][2]) {
-                title=title+' '+datasetCompleto[i].Title;
+            // Se le coordinate corrispondono, aggiungi il titolo della canzone dal dataset completo
+            if (cordX == datasetPCA[i][0] && cordY == datasetPCA[i][1] && cordZ == datasetPCA[i][2]) {
+                title = title + ' ' + datasetCompleto[i].Title;
             }
         }
+
+        // Aggiungi il titolo della canzone (o delle canzoni) all'array
         nameSongs.push(title);
-        j++;
-    }while(j<points.length)
-    return nameSongs;
+        j++; // Passa al prossimo punto
+    } while (j < points.length); // Continua fino a quando non sono stati elaborati tutti i punti
+
+    return nameSongs; // Restituisce l'array con i titoli delle canzoni
 }
+
 
 /**
  * Calcola la somma delle distanze euclidee tra un centroide e un insieme di punti.
