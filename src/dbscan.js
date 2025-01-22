@@ -112,7 +112,7 @@ function grafico3D(clusters, dataset) {
     });
 
     let layout = {
-        title: 'DBSCAN-generated clusters',
+        title: 'DBScan - Cluster generati',
         xaxis: { title: 'PC1' },
         yaxis: { title: 'PC2' },
         zaxis: { title: 'PC3' }
@@ -132,7 +132,7 @@ function graficoRelazione(epsilons, primocluster, noise) {
     let trace2 = { x: epsilons, y: noise, type: 'scatter', name: 'Numero di elementi Noise' };
     let data = [trace1, trace2];
     let layout = {
-        title: 'Relazione tra epsilon e risultati',
+        title: 'DBScan - Correlazione tra i parametri',
         xaxis: { title: 'Epsilon' },
         yaxis: { title: 'Numero elementi' }
     };
@@ -148,7 +148,7 @@ function graficoEpsilonNumeroCluster(epsilons, arrayNumeroCluster) {
     let trace1 = { x: epsilons, y: arrayNumeroCluster, type: 'scatter', name: 'Numero di clusters' };
     let data = [trace1];
     let layout = {
-        title: 'Relazione tra epsilon e numero di cluster',
+        title: 'DBScan - Correlazione tra i parametri',
         xaxis: { title: 'Epsilon' },
         yaxis: { title: 'Numero cluster' }
     };

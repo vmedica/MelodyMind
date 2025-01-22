@@ -13,7 +13,13 @@ const allSongsAsArray = results[3];
 
 kmeans.grafico3D(clusters,datasetAsArray,allSongsAsArray);
 kmeans.graficoRadar(clusters, datasetAsArray, allSongsAsArray);
-kmeans.makeHistograms(clusters, "Danceability", datasetAsArray, allSongsAsArray);
+clusters
 
+
+kmeans.makeHistograms(clusters, "Beats Per Minute (BPM)", datasetAsArray, allSongsAsArray);
+/*
+kmeans.makeHistograms(clusters, "Danceability", datasetAsArray, allSongsAsArray);
+kmeans.makeHistograms(clusters, "Loudness (dB)", datasetAsArray, allSongsAsArray);
+*/
 /* DBScan */
 dbscan.dbscan(pcaOutputPath);

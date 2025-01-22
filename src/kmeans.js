@@ -288,11 +288,9 @@ function control_point(point, pointControl) {
  */
 
 function elbowPoint(dataset,min,max){
-
     let kmin=min; //valore minimo di k
-    let kmax=max; //valore massi a cui puo arrivare k
+    let kmax=max; //valore max a cui puo arrivare k
     let sse=[]; //squared sum estimate
-
     for(k=kmin;k<=kmax;k++) { //Calcolo l'sse per ogni k
         clusterMaker.k(k);
         clusterMaker.iterations(100);
@@ -303,7 +301,6 @@ function elbowPoint(dataset,min,max){
             distortions = distortions + sommaDistanze(cluster[i].centroid, cluster[i].points);
         sse.push(distortions);
     }
-
     // Calcolo elbow point
     deltas = [];
     for (i = 1; i < sse.length - 1; i++){
@@ -312,8 +309,7 @@ function elbowPoint(dataset,min,max){
         deltas.push(Math.abs(delta2-delta1));
     }
     const maximumDelta = Math.max(...deltas);
-    const elbowPoint = deltas.indexOf(maximumDelta) + 1 + kmin; // Trust me
-
+    const elbowPoint = deltas.indexOf(maximumDelta) + 1 + kmin;
     //Inserisco in un array i valori di k per cui ho calcolato l'sse
     var cordinateX=[];
     for(k=0;k<kmax;k++)
@@ -327,19 +323,19 @@ function elbowPoint(dataset,min,max){
     };
     var data = [trace1];
     var layout = {
-        title: 'Elbow Point',
+        title: '(K-Means) Elbow Point',
         xaxis: {
-            title: 'Number of Clusters',
+            title: 'Numero di cluster',
         },
         yaxis: {
             title: 'SSE',
         }
     };
-
     nodeplotlib.plot(data,layout);
-
     return elbowPoint;
 }
+
+
 //Funzione usata per estrarre da un array di punti solo una determinata coordinata
 function extractColum(points,coordinata){
     var elementiColonna=[];

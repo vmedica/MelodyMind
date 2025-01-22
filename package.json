@@ -10,7 +10,9 @@
   "description": "",
   "dependencies": {
     "@cdxoo/dbscan": "^1.1.1",
+    "axios": "^1.7.9",
     "clusters": "^0.0.4",
+    "cors": "^2.8.5",
     "data-forge": "^1.10.2",
     "data-forge-fs": "^0.0.9",
     "express": "^4.21.2",
