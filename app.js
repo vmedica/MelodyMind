@@ -6,20 +6,33 @@ const pathDataset= pca.pcaProcess('./Dataset/DatasetSpotify2000.csv',0.70); // R
 const pathStandardizzato = pathDataset[0];
 const pcaOutputPath = pathDataset[1];
 
+/*DBScan*/
+dbscan.dbscan(pcaOutputPath);
+
+/*K-means*/
 const results = kmeans.mainKMeans(pcaOutputPath, pathStandardizzato);
 const clusters = results[0];
+const playlists = results[1];
 const datasetAsArray = results[2];
 const allSongsAsArray = results[3];
 
 kmeans.grafico3D(clusters,datasetAsArray,allSongsAsArray);
 kmeans.graficoRadar(clusters, datasetAsArray, allSongsAsArray);
-clusters
 
 
+/* Grafico a barre dei valori medi delle features considerate */
 kmeans.makeHistograms(clusters, "Beats Per Minute (BPM)", datasetAsArray, allSongsAsArray);
 /*
+kmeans.makeHistograms(clusters, "Energy", datasetAsArray, allSongsAsArray);
 kmeans.makeHistograms(clusters, "Danceability", datasetAsArray, allSongsAsArray);
 kmeans.makeHistograms(clusters, "Loudness (dB)", datasetAsArray, allSongsAsArray);
+kmeans.makeHistograms(clusters, "Liveness", datasetAsArray, allSongsAsArray);
+kmeans.makeHistograms(clusters, "Valence", datasetAsArray, allSongsAsArray);
+kmeans.makeHistograms(clusters, "Acousticness", datasetAsArray, allSongsAsArray);
+kmeans.makeHistograms(clusters, "Speechiness", datasetAsArray, allSongsAsArray);
 */
-/* DBScan */
-dbscan.dbscan(pcaOutputPath);
+
+kmeans.visualizzaCanzoniNeiCluster(clusters, datasetAsArray, allSongsAsArray);
+
+
+

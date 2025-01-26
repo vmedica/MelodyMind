@@ -46,7 +46,7 @@ function main(pcaOutputPath){
     Alla fine del ciclo, i dati raccolti sono usati per determinare quale valore di epsilon produce risultati migliori secondo un criterio (es. minimizzazione del delta).
      */
     for (e = 0.36; e <= 0.7; e += 0.03) {
-        console.log("E: " + e);
+
         arrayEpsilon.push(e);
 
         // Applicazione del clustering con il valore corrente di epsilon

@@ -68,7 +68,7 @@ function pcaWork(datasetDiPartenza,percentualeOttima){
     var vectors = pca.getEigenVectors(data);
 
     //Percentuale di accuratezza considerando il primo, i primi due e i primi tre autovettori
-    console.log("Percentuali di varianza calcolati: ");
+    //console.log("Percentuali di varianza calcolati: ");
     let v = [];
     let percentualiVarianza = [];
     let percentuale;
@@ -77,7 +77,7 @@ function pcaWork(datasetDiPartenza,percentualeOttima){
         v.push(vectors[i]);
         percentuale=pca.computePercentageExplained(vectors, ...v);
         percentualiVarianza.push(percentuale);
-        console.log(i+1 +" : "+percentuale);
+        //console.log(i+1 +" : "+percentuale);
         if(percentuale>=percentualeOttima) {
             break;
         }

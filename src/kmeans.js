@@ -61,7 +61,7 @@ function main(pathPCA, pathStandardizzato) {
 
     // 2. Determina il numero ottimale di cluster utilizzando il metodo del punto di gomito
     const elbowPointIndex = elbowPoint(datasetPCA, 2, 10);  //passato il numero min e max di cluster
-    console.log("Punto di gomito: " + elbowPointIndex);
+    //console.log("Punto di gomito: " + elbowPointIndex);
 
     // 3. Esegue il clustering con il numero di cluster ottimale
     const clusters = makeCluster(elbowPointIndex, 1000, datasetPCA);
@@ -568,6 +568,33 @@ function researchTitleCluster(points, datasetPCA, datasetCompleto) {
     return nameSongs; // Restituisce l'array con i titoli delle canzoni
 }
 
+function researchArtistCluster(points, datasetPCA, datasetCompleto) {
+    var j = 0; // Indice per scorrere i punti del cluster
+    var nameSongs = []; // Array per memorizzare i titoli delle canzoni
+
+    // Itera su tutti i punti del cluster
+    do {
+        // Estrai le coordinate (x, y, z) del punto
+        var cordX = points[j][0];
+        var cordY = points[j][1];
+        var cordZ = points[j][2];
+        var artist = ''; // Variabile per raccogliere l'artista della canzone
+
+        // Confronta le coordinate del punto con quelle nel dataset PCA
+        for (i = 0; i < datasetPCA.length; i++) {
+            // Se le coordinate corrispondono, aggiungi il titolo della canzone dal dataset completo
+            if (cordX == datasetPCA[i][0] && cordY == datasetPCA[i][1] && cordZ == datasetPCA[i][2]) {
+                artist = artist + ' ' + datasetCompleto[i].Artist;
+            }
+        }
+
+        // Aggiungi il titolo della canzone (o delle canzoni) all'array
+        nameSongs.push(artist);
+        j++; // Passa al prossimo punto
+    } while (j < points.length); // Continua fino a quando non sono stati elaborati tutti i punti
+
+    return nameSongs; // Restituisce l'array con i titoli delle canzoni
+}
 
 /**
  * Calcola la somma delle distanze euclidee tra un centroide e un insieme di punti.
@@ -703,6 +730,29 @@ function graficoNumeroPuntiClusterByVarianza(numeroPunti, numeroCluster, percent
     nodeplotlib.plot(data, layout);
 }
 
+// Funzione per visualizzare le canzoni presenti nei cluster
+function visualizzaCanzoniNeiCluster(clusters, datasetCluster, datasetCompleto) {
+    // Itera attraverso ogni cluster per estrarre e visualizzare i dettagli delle canzoni.
+    console.log("\nSono state create " + clusters.length + " playlist: \n");
+    let count = 0;
+    clusters.forEach((cluster, i) => {
+        console.log("Playlist " + i + ":");
+
+        // Ottiene i titoli e i generi delle canzoni appartenenti a questo cluster.
+        const title = researchTitleCluster(cluster.points, datasetCluster, datasetCompleto);
+        const genere = researchGenreCluster(cluster.points, datasetCluster, datasetCompleto);
+        const artist = researchArtistCluster(cluster.points, datasetCluster, datasetCompleto);
+
+        // Stampa le canzoni del cluster.
+        for(let j=0; j<title.length; j++, count++){
+            console.log(count + "   Titolo:"+ title[j] + ", Artista:"+ artist[j] + ", Top Genere:"+ genere[j]);
+        }
+        console.log("\n"); // Aggiunge una riga vuota tra i cluster per chiarezza.
+    });
+}
+
+
+
 
 /*
  * Esporta le funzioni:
@@ -713,3 +763,4 @@ exports.mainKMeans = main;
 exports.grafico3D = grafico3D;
 exports.graficoRadar = graficoRadar;
 exports.makeHistograms = makeBarChart;
+exports.visualizzaCanzoniNeiCluster = visualizzaCanzoniNeiCluster;
