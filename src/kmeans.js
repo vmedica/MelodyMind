@@ -168,91 +168,6 @@ function barChart(puntiCluster, feature, datasetCluster, datasetCompleto, nClust
     nodeplotlib.plot(data, layout);
 }
 
-
-/**
- * Funzione che calcola le percentuali di genere musicale all'interno di un cluster.
- *
- * @param {Array} points - Un array di punti del cluster, ciascuno rappresentato come un array di 3 valori (X, Y, Z).
- * @param {Array} datasetPCA - Il dataset PCA contenente le coordinate ridotte delle canzoni.
- * @param {Array} datasetCompleto - Il dataset completo che include informazioni sui generi musicali e altre proprietà delle canzoni.
- *
- * @returns {string} Una stringa che contiene le percentuali dei generi principali presenti nel cluster.
- */
-function categorizzazioneCluster(points, datasetPCA, datasetCompleto) {
-    // Generi musicali principali di riferimento
-    var generiPrincipali = ["alternative", "jazz", "pop", "indie", "rock", "country", "dance",
-        "hip hop", "metal", "blues", "folk", "soul", "carnaval", "punk",
-        "disco", "electro", "rap", "latin", "reggae", "altri"];
-
-    // 1. Ottieni tutti i generi delle canzoni nel cluster
-    var generi = [];
-    generi = researchGenreCluster(points, datasetPCA, datasetCompleto);
-
-    // 2. Conteggio delle canzoni per categoria di genere
-    var conteggioGeneri = [];
-
-    // Inizializza l'array di conteggi con valori a zero
-    for (var j = 0; j < 20; j++) {
-        conteggioGeneri[j] = 0;
-    }
-
-    // Incrementa il conteggio per ogni genere corrispondente
-    for (var z = 0; z < generi.length; z++) {
-        if (generi[z].includes(generiPrincipali[0]))
-            conteggioGeneri[0]++;
-        else if (generi[z].includes(generiPrincipali[1]))
-            conteggioGeneri[1]++;
-        else if (generi[z].includes(generiPrincipali[2]))
-            conteggioGeneri[2]++;
-        else if (generi[z].includes(generiPrincipali[3]))
-            conteggioGeneri[3]++;
-        else if (generi[z].includes(generiPrincipali[4]))
-            conteggioGeneri[4]++;
-        else if (generi[z].includes(generiPrincipali[5]))
-            conteggioGeneri[5]++;
-        else if (generi[z].includes(generiPrincipali[6]))
-            conteggioGeneri[6]++;
-        else if (generi[z].includes(generiPrincipali[7]))
-            conteggioGeneri[7]++;
-        else if (generi[z].includes(generiPrincipali[8]))
-            conteggioGeneri[8]++;
-        else if (generi[z].includes(generiPrincipali[9]))
-            conteggioGeneri[9]++;
-        else if (generi[z].includes(generiPrincipali[10]))
-            conteggioGeneri[10]++;
-        else if (generi[z].includes(generiPrincipali[11]))
-            conteggioGeneri[11]++;
-        else if (generi[z].includes(generiPrincipali[12]))
-            conteggioGeneri[12]++;
-        else if (generi[z].includes(generiPrincipali[13]))
-            conteggioGeneri[13]++;
-        else if (generi[z].includes(generiPrincipali[14]))
-            conteggioGeneri[14]++;
-        else if (generi[z].includes(generiPrincipali[15]))
-            conteggioGeneri[15]++;
-        else if (generi[z].includes(generiPrincipali[16]))
-            conteggioGeneri[16]++;
-        else if (generi[z].includes(generiPrincipali[17]))
-            conteggioGeneri[17]++;
-        else if (generi[z].includes(generiPrincipali[18]))
-            conteggioGeneri[18]++;
-        else
-            conteggioGeneri[19]++; // Categoria "altri"
-    }
-
-    // 3. Creazione della stringa con le percentuali
-    var percentuale = "";
-    for (var i = 0; i < generiPrincipali.length; i++) {
-        if (conteggioGeneri[i] != 0) {
-            percentuale += generiPrincipali[i] + ": " + ((conteggioGeneri[i] / points.length) * 100).toFixed(0) + "%\n";
-        }
-    }
-
-    // Ritorna la stringa delle percentuali
-    return percentuale;
-}
-
-
 /**
  * Controlla se due punti nello spazio hanno le stesse coordinate.
  *
@@ -438,16 +353,15 @@ function grafico3D(clusters, datasetCluster, datasetCompleto) {
                 title: _title[p],
                 genere: _genere[p].trim()
             };
-            songs.push(song); // Aggiungi la canzone all'array `songs`.
+            songs.push(song); // Aggiunge la canzone all'array `songs`.
         }
-
         // Crea una traccia per il grafico 3D, rappresentando un cluster.
         let trace = {
             x: _x,
             y: _y,
             z: _z, // Coordinate dei punti del cluster nello spazio 3D.
             mode: 'markers', // Mostra i punti come marcatori.
-            name: "Trace " + i + ": " + categorizzazioneCluster(clusters[i].points, datasetCluster, datasetCompleto),
+            name: "Cluster " + i,
             marker: {
                 size: 5, // Dimensione dei marcatori per ogni punto.
                 line: {
