@@ -4,7 +4,10 @@ MelodyMind è un progetto realizzato da Vincenzo Medica per il corso di Fondamen
 ## Obiettivo del progetto
 L'obiettivo principale del progetto è quello di clusterizzare una libreria musicale, suddividendola in diverse playlist. Ogni playlist contiene brani "simili" in base a specifiche caratteristiche sonore.
 
-Per maggiori dettagli sulle varie fasi del processo, si può consultare il [Report di progetto](./Documenti/).
+## Documentazione
+Per comprendere meglio il progetto MelodyMind, sono disponibili i seguenti materiali:
+- [Presentazione del progetto](./Documenti/MelodyMind_presentation_medica.pdf): Fornisce una panoramica generale del progetto e dei suoi obiettivi.
+- [Report di progetto](./Documenti/MelodyMind_report_medica.pdf): Contiene i dettagli approfonditi sulle diverse fasi del processo, inclusi gli algoritmi e le scelte progettuali.
 
 ## Prerequisiti
 Il progetto richiede l'installazione di [NodeJS](https://nodejs.org/it/) e del package manager [npm](https://www.npmjs.com/).
